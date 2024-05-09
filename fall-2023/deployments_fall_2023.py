@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 from pathlib import Path
-import regex as re
 
 import numpy as np
+import pandas as pd
 from netCDF4 import Dataset
 
 import matplotlib.pyplot as plt
@@ -97,29 +97,18 @@ def label_at_edge(levels, cs, ax, fmt, side='both', pad=0.005, **kwargs):
                             **kwargs)
     return
 
-# get argo global profile index
-prof = argo.prof[:]
-
 # list of floats deployed
-wmos = ['4902515', '4902518', '4902519']
-# get an index to only have those floats
-ix = prof.shape[0]*[False]
-for w in wmos:
-    ix = ix | prof['file'].str.contains(w)
-prof = prof[ix]
-# don't want the downcasts - remove
-upcasts = [re.match(r'.*D\.nc', f) is None for f in prof['file']]
-prof = prof[upcasts]
-
-# extract data
-df = prof.levels[['PRES', 'PSAL', 'TEMP']]
+wmos = [4902627, 4902600, 4902601]
+# index of profiles
+px = pd.concat([argo.float(wmo).synthetic_prof.subset_direction('asc').subset_date(date_end='11-2023').iloc[:1] for wmo in wmos])
+df = pd.concat([argo.float(wmo).synthetic_prof.subset_direction('asc').subset_date(date_end='11-2023').iloc[:1].levels[['PRES', 'PSAL', 'TEMP', 'DOXY', 'CHLA', 'BBP700']] for wmo in wmos])
 
 # get density contours
 vt, vs = np.meshgrid(
     np.linspace(df.TEMP.min()-2, df.TEMP.max()+2, 100),
     np.linspace(df.PSAL.min()-0.5, df.PSAL.max()+0.5, 100)
 )
-pden = gsw.pot_rho_t_exact(gsw.SA_from_SP(vs, 0, prof.longitude.mean(), prof.latitude.mean()), vt, 0, 0) - 1000
+pden = gsw.pot_rho_t_exact(gsw.SA_from_SP(vs, 0, px.longitude.mean(), px.latitude.mean()), vt, 0, 0) - 1000
 # contour levels
 levels = list(range(18, 30, 2))
 
@@ -131,10 +120,10 @@ blon = bath['lon'][:]
 elev = bath['elevation'][:]
 
 extent = [
-    prof['longitude'].max() - 6,
-    prof['longitude'].max() + 5,
-    prof['latitude'].min() - 3,
-    prof['latitude'].max() + 6
+    px['longitude'].max() - 6,
+    px['longitude'].max() + 5,
+    px['latitude'].min() - 3,
+    px['latitude'].max() + 6
 ]
 
 ix = np.logical_and(blon > extent[0], blon < extent[1])
@@ -149,79 +138,119 @@ elev = -np.ma.masked_array(elev.data, elev > 0)
 # plot data
 gs = GridSpec(2, 3)
 fig = plt.figure()
-axes = [
-    fig.add_subplot(gs[:,0]), 
+primary_axes = [
+    fig.add_subplot(gs[:,0]),
     fig.add_subplot(gs[:,1]), 
     fig.add_subplot(gs[0, 2]), 
     fig.add_subplot(gs[1, 2], projection=ccrs.PlateCarree())
 ]
+axes = [
+    primary_axes[0],
+    primary_axes[0].twiny(),
+    primary_axes[1],
+    primary_axes[1].twiny(),
+    primary_axes[1].twiny(),
+    primary_axes[2],
+    primary_axes[3]
+]
 
 # order of deployment
 hue_order = [
-    'meds/4902518/profiles/R4902518_001.nc',
-    'meds/4902515/profiles/R4902515_001.nc',
-    'meds/4902519/profiles/R4902519_001.nc'
+    'meds/4902627/profiles/SR4902627_001.nc',
+    'meds/4902600/profiles/SR4902600_001.nc',
+    'meds/4902601/profiles/SR4902601_002.nc',
 ]
 # temperature profile
-sns.lineplot(x='TEMP', y='PRES', hue='file', hue_order=hue_order, data=df, sort=False, legend=False, ax=axes[0])
+sns.lineplot(x='TEMP', y='PRES', hue='file', data=df, sort=False, legend=False, ax=axes[0], estimator=None)
 # salinity profile
-sns.lineplot(x='PSAL', y='PRES', hue='file', hue_order=hue_order, data=df, sort=False, legend=False, ax=axes[1])
+sns.lineplot(x='PSAL', y='PRES', hue='file', data=df, sort=False, legend=False, ax=axes[1], estimator=None)
+# chla profile
+sns.lineplot(x='CHLA', y='PRES', hue='file', data=df, sort=False, legend=False, ax=axes[2], estimator=None)
+# oxygen profile
+sns.lineplot(x='DOXY', y='PRES', hue='file', data=df, sort=False, legend=False, ax=axes[3], estimator=None)
+# bbp profile
+sns.lineplot(x='BBP700', y='PRES', hue='file', data=df, sort=False, legend=False, ax=axes[4], estimator=None)
 # TS diagram w/ pot density contours 
-cs = axes[2].contour(vs, vt, pden, colors='black', levels=levels, zorder=1)
-label_at_edge(levels, cs, axes[2], '%d', side='lowerleft', pad=0.1)
-sns.scatterplot(x='PSAL', y='TEMP', hue='file', hue_order=hue_order, data=df, legend=False, ax=axes[2], zorder=2, edgecolor=None)
+cs = axes[-2].contour(vs, vt, pden, colors='black', levels=levels, zorder=1)
+sns.scatterplot(x='PSAL', y='TEMP', hue='file', data=df, legend=False, ax=axes[-2], zorder=2, edgecolor=None)
 # map of float deployment locations
-im = axes[3].contourf(
+im = axes[-1].contourf(
     blon, blat, elev,
     transform=ccrs.PlateCarree(),
     cmap=cmo.deep,
     vmin=0, extend='max'
 )
 cax = fig.add_axes([0.67, 0.03, 0.24, 0.015])
-cb = plt.colorbar(im, ax=axes[3], orientation='horizontal', label='Depth (m)', cax=cax)
-sns.scatterplot(x='longitude', y='latitude', hue='file', hue_order=hue_order, data=prof, legend=False, ax=axes[3], transform=ccrs.PlateCarree())
+cb = plt.colorbar(im, ax=axes[-1], orientation='horizontal', cax=cax)
+sns.scatterplot(x='longitude', y='latitude', hue='file', data=px, legend=False, ax=axes[-1], transform=ccrs.PlateCarree())
 
 # format figure
+fs = 8
+label_at_edge(levels, cs, axes[5], '%d', side='lowerleft', pad=0.1, fontsize=fs)
+cb.set_label('Depth (m)', fontsize=fs)
 axes[0].set_ylim((2000, 0))
-axes[0].set_xlabel('Temperature ({}C)'.format(chr(176)))
-axes[0].set_ylabel('Pressure (dbar)')
-axes[0].legend(['HL_10: 4902518\n2021-09-05 05:17', 'HL_12: 4902515\n2021-09-25 18:59', 'LL_09: 4902519\n2021-09-07 20:59'], loc=4, fontsize=7)
-axes[1].set_ylim((2000, 0))
-axes[1].set_xlabel('Practical Salinity')
-axes[1].set_ylabel('')
-axes[1].set_yticklabels([])
-axes[2].set_xlabel(axes[1].get_xlabel())
-axes[2].set_ylabel(axes[0].get_xlabel())
-axes[2].yaxis.tick_right()
-axes[2].yaxis.set_label_position('right')
-axes[2].xaxis.tick_top()
-axes[2].xaxis.set_label_position('top')
-axes[3].set_xticks(np.arange(np.ceil(extent[0]), np.floor(extent[1]), 4), crs=ccrs.PlateCarree())
-axes[3].set_yticks(np.arange(np.ceil(extent[2]), np.floor(extent[3]), 4), crs=ccrs.PlateCarree())
+axes[0].set_xlabel(f'Temperature ({chr(176)}C)', loc='left', fontsize=fs)
+axes[0].set_ylabel('Pressure (dbar)', fontsize=fs)
+axes[0].legend(['LL_09 - 4902627\n2023-09-16', 'LL_08 - 4902600\n2023-09-16', 'HL_07 - 4902601\n2023-10-05'], loc=3, fontsize=6)
+axes[0].set_xlim((1.5,35))
+axes[0].set_xticks([5, 10, 15])
+axes[1].set_xlabel('Practical Salinity', loc='right', fontsize=fs)
+axes[1].set_xlim((28, 37))
+axes[1].set_xticks([32, 34, 36])
+axes[2].set_ylim((2000, 0))
+axes[2].set_ylabel('')
+axes[2].set_yticklabels([])
+axes[2].set_xlabel('Chl $a$ (mg m$^{-3}$)', loc='left', fontsize=fs)
+# axes[2].set_xlim((-0.2, 3))
+axes[2].set_xlim((-0.2, 8))
+# axes[2].set_xticks([0, 0.5, 1])
+axes[2].set_xticks([0, 2])
+axes[3].set_xlabel('Oxygen ($\mathregular{\mu}$mol kg$^{-1}$)', fontsize=fs)
+# axes[3].set_xlabel('Oxygen ($\mathregular{\mu}$mol kg$^{-1}$)', loc='right', fontsize=fs)
+axes[3].set_xlim((0, 500))
+# axes[3].set_xlim((0, 270))
+axes[3].set_xticks([180, 280])
+# axes[3].set_xticks([140, 200, 260])
+axes[4].xaxis.tick_bottom()
+axes[4].xaxis.set_label_position('bottom')
+axes[4].set_xlabel('$b_{bp}$ (m$^{-1}$)', loc='right', fontsize=fs)
+axes[4].set_xlim((-0.016, 0.008))
+axes[4].set_xticks([0, 0.006])
+axes[-2].set_xlabel(axes[1].get_xlabel(), fontsize=fs)
+axes[-2].set_ylabel(axes[0].get_xlabel(), fontsize=fs)
+axes[-2].yaxis.tick_right()
+axes[-2].yaxis.set_label_position('right')
+axes[-2].xaxis.tick_top()
+axes[-2].xaxis.set_label_position('top')
+axes[-1].set_xticks(np.arange(np.ceil(extent[0]), np.floor(extent[1]), 4), crs=ccrs.PlateCarree())
+axes[-1].set_yticks(np.arange(np.ceil(extent[2]), np.floor(extent[3]), 4), crs=ccrs.PlateCarree())
 lon_formatter = LongitudeFormatter(zero_direction_label=True)
 lat_formatter = LatitudeFormatter()
-axes[3].xaxis.set_major_formatter(lon_formatter)
-axes[3].yaxis.set_major_formatter(lat_formatter)
-axes[3].yaxis.tick_right()
-axes[3].set_xlabel('')
-axes[3].set_ylabel('')
-axes[3].set_extent(extent)
-axes[3].add_feature(cfeature.GSHHSFeature('auto', edgecolor='black', facecolor='lightgray'))
+axes[-1].xaxis.set_major_formatter(lon_formatter)
+axes[-1].yaxis.set_major_formatter(lat_formatter)
+axes[-1].yaxis.tick_right()
+axes[-1].set_xlabel('')
+axes[-1].set_ylabel('')
+axes[-1].set_extent(extent)
+axes[-1].add_feature(cfeature.GSHHSFeature('auto', edgecolor='black', facecolor='lightgray'))
 
 # rotate ylabels
 for ax in axes:
     for yl in ax.get_yticklabels():
-        yl.update(dict(rotation=90))
+        yl.update(dict(rotation=90, fontsize=fs))
         yl.set_verticalalignment('center')
-for ax in axes[:3]:
-    ax.grid()
+    for xl in ax.get_xticklabels():
+        xl.update(dict(fontsize=fs))
 tls = []
+for ax in axes[:-2]:
+    ax.grid(axis='x')
+axes[-2].grid()
 for i,cl in enumerate(cb.ax.xaxis.get_ticklabels()):
     if i % 2 == 0:
         tls.append(cl.get_text())
     else:
         tls.append('')
-cb.ax.xaxis.set_ticklabels(tls)
-fig.savefig(Path('figures/azmp_floats_first_profiles.png'), bbox_inches='tight', dpi=350)
+cb.ax.xaxis.set_ticklabels(tls, fontsize=fs)
+fig.savefig(Path('../figures/azmp_fall_2023_floats_first_profiles_5var.png'), bbox_inches='tight', dpi=350)
 plt.close(fig)
 print('Done')

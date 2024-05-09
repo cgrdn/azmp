@@ -33,6 +33,6 @@ df.plot('oxygenRawError', 'oxygenError', c='pressure', kind='scatter', cmap='vir
 df.plot('oxygenRaw', 'oxygen', c='oxygenError', kind='scatter', cmap='viridis', ax=axes[3])
 
 fig.tight_layout()
-fig.savefig(Path('figures/oxygen_scatters.png'), dpi=350, bbox_inches='tight')
+fig.savefig(Path('../figures/oxygen_scatters.png'), dpi=350, bbox_inches='tight')
 
 plt.show()

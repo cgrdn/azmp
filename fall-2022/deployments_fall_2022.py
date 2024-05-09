@@ -250,6 +250,6 @@ for i,cl in enumerate(cb.ax.xaxis.get_ticklabels()):
     else:
         tls.append('')
 cb.ax.xaxis.set_ticklabels(tls, fontsize=fs)
-fig.savefig(Path('figures/azmp_fall_2022_floats_first_profiles_5var.png'), bbox_inches='tight', dpi=350)
+fig.savefig(Path('../figures/azmp_fall_2022_floats_first_profiles_5var.png'), bbox_inches='tight', dpi=350)
 plt.close(fig)
 print('Done')
