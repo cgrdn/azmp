@@ -1,17 +1,3 @@
----
-title: "Spring AZMP 2024: Argo Deployments"
-description: |
-  Summary of deployments on the Spring AZMP aboard the CCGS Teleost and initial data.
-author:
-  - name: Christopher Gordon
-    url: https://github.com/cgrdn
-date: 2024-05-09
-output:
-  distill::distill_article:
-    self_contained: false
-    code_folding: false
----
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
