@@ -20,7 +20,10 @@ knitr::opts_chunk$set(echo = FALSE)
 Two profiling Argo floats were deployed on AZMP stations HL_07 and LL_09, with WMO numbers 4902622 and 4902676 respectively (table [table ref]). The floats were NKE PROVOR floats equipped with a CTD, oxygen optode, an ECO sensor measuring chlorophyll and optical backscattering. These floats will record vertical profiles from 2000m to the surface every 10 days, with data being delivered and quality controlled in real time, openly available within 24 hours of its collection. The floats should survive for 5 years before their batteries are depleted.
 
 ```{r table, include=TRUE}
-float_meta_data <- read.csv("data/float_meta.csv")
+report_year <- "2024_spring"
+path_meta <- "../analysis/common/"
+
+float_meta_data <- read.csv(paste0(path_meta, mission, "float_meta.csv"))
 knitr::kable(
   float_meta_data, 
   col.names = gsub("[.]", " ", names(float_meta_data)),

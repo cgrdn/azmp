@@ -1,0 +1,46 @@
+## Argo Floats {#argo-floats}
+
+During the DY18402, DFO and NOC collaboratively deployed 2 Argo floats from the RRS _Discovery_ in support of the international [Argo program](https://argo.ucsd.edu/). Both floats were PROVOR biogeochemical (BGC) models, which record temperature, conductivity, dissolved oxygen, chlorophyll fluorescence, and backscatter. The first float was deployed at station HL_07 after completion of the CTD and ring net operations. The second float, which was initially planned for deployment at station LL_09, was deployed further south in approximately 3960 m of water, at the location of a mooring deployment (M2300). The decision to deploy the float at this location instead of at AZMP station LL_09 was to take advantage of deeper water and good weather, which was forecasted to deteriorate later that day. 
+
+Both floats were deployed by hand by two crew using a slip rope that was tied off on the ship's infrastructure for leverage. One hour prior to deployment, the floats were pre-tested to confirm establishment of the float's GPS and iridium communications. The floats will remain active for approximately 5 years, collecting vertical profiles from the surface to 2000 m every 10 days. 
+
+\hspace*{-0.2in}
+
+
+```{r table6, results="asis", include=TRUE, echo=FALSE}
+
+table6 <- readr::read_csv(file.path("files", "ArgoFloat_DeploymentMetadata_DY18402.csv"))
+table6_df <- data.frame(table6)
+table6_df$Lat <- measurements::conv_unit(table6_df$Lat, from = 'deg_dec_min', to = 'dec_deg') 
+table6_df$Lon <- measurements::conv_unit(table6_df$Lon, from = 'deg_dec_min', to = 'dec_deg')
+table6_df$Lat <- as.numeric(table6_df$Lat)
+table6_df$Lon <- as.numeric(table6_df$Lon)
+table6_df$Lon <- table6_df$Lon*(-1)
+table6_df2 <- table6_df[-c(9, 10)] 
+table6_df2$IMEI <- format(table6_df2$IMEI, digits=15, scientific=FALSE)
+table6_df2$Lon <- format(table6_df2$Lon, digits=6)
+table6_df2$Lat <- format(table6_df2$Lat, digits=6)
+
+kbl(table6_df2, 
+    booktabs = TRUE,
+    linesep = "",
+    longtable = TRUE,
+    format = "latex",
+    escape = TRUE,
+    align = "l",
+    col.names = c("IMEI", "S/N", "WMO", "Date", "Ev.", "Stn.", "Magnet Removal (UTC)", "Deploy. (UTC)", "Lat. (DD)", "Lon. (DD)"),
+    caption = "Metadata associated with the deployment of two Argo floats during the fall AZMP DY18402 survey. The IMEI, WMO, and serial numbers (S/N) of each float are provided, along with the time of magnet removal and deployment (UTC), and associated date, event, station, and latitude and longitude (in decimal degrees) of deployment.") %>%
+    kableExtra::row_spec(c(0), bold = TRUE, font_size = 11) %>%
+    kableExtra::row_spec(c(1,2), font_size = 10) %>%
+    kableExtra::column_spec(1, width = "4em") %>%
+    kableExtra::column_spec(2, width = "3em") %>%
+    kableExtra::column_spec(4, width = "4em") %>%
+    kableExtra::column_spec(5, width = "2em") %>%
+    kableExtra::column_spec(6, width = "2em") %>%
+    kableExtra::column_spec(7, width = "4em") %>%
+    kableExtra::column_spec(8, width = "3em") %>%
+    kableExtra::column_spec(9, width = "3em") %>%
+    kableExtra::column_spec(10, width = "4em")
+```
+
+\clearpage
