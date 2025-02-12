@@ -180,8 +180,6 @@ btl['VARNAME'] = [v.replace('1', '').replace('2','') for v in btl.variable]
 btl = btl.loc[btl.PRES_DIFF < 5]
 btl['STATION'] = [i[0] for i in btl.index]
 
-
-
 g = sns.FacetGrid(btl, col='VARNAME', hue='STATION', sharex=False, sharey=False, despine=False, col_order=['PSAL', 'DOXY', 'CHLA'])
 g = g.map(plt.plot, 'Argo', 'Bottle', marker='*', linewidth=0, markeredgewidth=0.25, markeredgecolor='k', markersize=10)
 g.axes[0,0].title.set_text(varlabels[1])
