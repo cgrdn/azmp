@@ -9,7 +9,7 @@ sns.set_theme(style='ticks', palette='colorblind')
 
 import matplotlib.pyplot as plt
 from matplotlib.offsetbox import AnchoredText
-from mpl_toolkits.axes_grid.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 import pycnv
 import cmocean.cm as cmo
