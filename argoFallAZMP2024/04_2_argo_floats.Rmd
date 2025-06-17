@@ -14,7 +14,7 @@ Both floats were deployed by hand by two crew using a slip rope that was tied of
 
 ```{r table6, results="asis", include=TRUE, echo=FALSE}
 
-table6 <- readr::read_csv(file.path("ArgoFloat_DeploymentMetadata_DY18402.csv"))
+table6 <- readr::read_csv(file.path(meta_path, "ArgoFloat_DeploymentMetadata_DY18402.csv"))
 table6_df <- data.frame(table6)
 table6_df$Lat <- measurements::conv_unit(table6_df$Lat, from = 'deg_dec_min', to = 'dec_deg') 
 table6_df$Lon <- measurements::conv_unit(table6_df$Lon, from = 'deg_dec_min', to = 'dec_deg')
@@ -51,7 +51,7 @@ knitr::kable(table6_df2,
 
 The first profile recorded by each float is shown in figure \@ref(fig:argo-figure-2). For salinity, oxygen, and chlorophyll, analogous water samples are shown as well. The floats perform thei first ascent 2 days following deployment, so it is important to keep in mind when comparing the ship and float data that they are separated temporally and potentially spatially depending on the drift of the float during that time. In the case of the float deployed at mooring station M2300, the nearest station in both time and space is Louisbourg 9 (LL_09), which is about 15 Nautical miles away from the mooring station. 
 
-At both stations, float and bottle samples are grossly well aligned. Float oxygen data have been adjusted by a gain factor calculated by comparing the Argo surface data to the nearest available surface data in the World Ocean Atlas, as described by [Bittig et al. (2018)]. For float 4902674 deployed at HL_07, float measurements are slightly higher than bottle samples at depth, but this may be resolved later as the gain factor may change as more profiles are collected, or by using in-air samples taken by float while at the surface, which are preferred over in-water samples for correction.
+At both stations, float and bottle samples are grossly well aligned. Float oxygen data have been adjusted by a gain factor calculated by comparing the Argo surface data to the nearest available surface data in the World Ocean Atlas. For float 4902674 deployed at HL_07, float measurements are slightly higher than bottle samples at depth, but this may be resolved later as the gain factor may change as more profiles are collected, or by using in-air samples taken by float while at the surface, which are preferred over in-water samples for correction.
 
 ```{r argo-figure-2, include=TRUE, echo=FALSE, fig.cap="Initial profile for Argo floats 4902674 and 4902678 deployed at stations HL_07 and M2300 respectively. Solid coloured lines show float data, and square points show water sample data for salinity (autosal), oxygen (Winkler titrations), and chlorophyll (flourometry) from stations HL_07 and LL_09 respectively. Insets on the chlorophyll plots (d, i) show the surface layer."}
 knitr::include_graphics(file.path("figures",  "azmp_2024_fall_CTD_bottle_first_profiles.png"))
