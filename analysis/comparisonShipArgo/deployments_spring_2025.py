@@ -30,22 +30,26 @@ def nc_to_dataframe(fn, wmo=None):
 
 
 meta = pd.read_csv('../meta/ArgoFloat_DeploymentMetadata_EN728.csv')
+sal = pd.read_csv('data/EN728_Salinity_Summary.csv')
 
 fig, axes = plt.subplots(2, 2, sharey=True)
 
 varcolors = {
     'TEMP':cmo.thermal(0.8),
     'PSAL':cmo.haline(0.3),
+    'SA':cmo.haline(0.3),
 }
 
 varlabels = {
     'TEMP':f'Temperature ({chr(176)}C)', 
     'PSAL':'Salinity', 
+    'SA':'Abs. Salinity (g kg$^{-1}$)'
 }
 
 varlims = {
     'TEMP':(1.7, 13.1), 
     'PSAL':(32.05, 35.4), 
+    'SA':(32.05, 35.4), 
 }
 
 figlabels = [['a', 'b'], ['c', 'd']]
@@ -55,9 +59,11 @@ bottom = False
 
 for axrow, wmo, stn, figs in zip(axes, meta.WMO, meta.Station, figlabels):
     argo = nc_to_dataframe(f'data/{wmo}/profiles/R{wmo}_001.nc', wmo=wmo)
+    argo['SA'] = gsw.SA_from_SP(argo.PSAL.values, argo.PRES.values, -58, 43)
     argo['rho0'] = gsw.pot_rho_t_exact(
-        gsw.SA_from_SP(argo.PSAL.values, argo.PRES.values, -58, 43),
-        argo.TEMP.values, argo.PRES.values, 0
+        argo['SA'],
+        argo.TEMP.values, 
+        argo.PRES.values, 0
     )
     axrow[0].set_ylabel('Pressure (dbar)', fontsize=8)
     axrow[0].set_title(f'{stn} - {wmo}', loc='left', fontweight='bold', fontsize=10)
@@ -68,6 +74,13 @@ for axrow, wmo, stn, figs in zip(axes, meta.WMO, meta.Station, figlabels):
             argo.loc[sl, 'PRES'], 
             color=varcolors[av], linewidth=1.25, zorder=1
         )
+        if av == 'PSAL' or av == 'SA':
+            for bv in ['Sal_Rep1', 'Sal_Rep2']:
+                ax.scatter(
+                    sal.loc[sal['STATION'] == stn, bv], 
+                    sal.loc[sal['STATION'] == stn, 'PRESSURE'], 
+                    marker='s', color=varcolors[av], linewidth=1, edgecolor='k', zorder=2
+                )
         at = AnchoredText(f'({f})', loc='lower left', prop=dict(size=8, fontweight='bold'), frameon=False)
         ax.add_artist(at)
         if bottom:
